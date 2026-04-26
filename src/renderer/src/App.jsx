@@ -37,10 +37,12 @@ export default function App() {
   const [file,        setFile]        = useState(null)
   const [mode,        setMode]        = useState(null)   // 'encrypt' | 'decrypt'
   const [outputPath,  setOutputPath]  = useState(null)
-  const [decryptErr,  setDecryptErr]  = useState(false)
+  const [decryptError, setDecryptError] = useState(null)
+  const [encryptError, setEncryptError] = useState(null)
   const [progress,    setProgress]    = useState(0)
   const [phase,       setPhase]       = useState('')
-  const containerRef = useRef()
+  const containerRef  = useRef()
+  const cancelledRef  = useRef(false)
 
   // Listen to crypto progress events from main process
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function App() {
     window.electronAPI.getFileArg().then(f => {
       if (!f) return
       setFile(f)
-      const isEncrypted = f.name.endsWith('.enc') || f.name.endsWith('.aes')
+      const isEncrypted = f.name.toLowerCase().endsWith('.enc') || f.name.toLowerCase().endsWith('.aes')
       setScreen(isEncrypted ? 'decrypt' : 'encrypt')
     })
   }, [])
@@ -88,18 +90,33 @@ export default function App() {
   /* ── Actions ── */
   const handleFileSelected = useCallback(f => {
     setFile(f)
-    setDecryptErr(false)
-    const isEncrypted = f.name.endsWith('.aes') || f.name.endsWith('.enc')
+    setDecryptError(null)
+    setEncryptError(null)
+    const isEncrypted = f.name.toLowerCase().endsWith('.aes') || f.name.toLowerCase().endsWith('.enc')
     setScreen(isEncrypted ? 'decrypt' : 'encrypt')
   }, [])
 
   const handleClear = useCallback(() => {
     setFile(null)
-    setDecryptErr(false)
+    setDecryptError(null)
+    setEncryptError(null)
+    setScreen('drop')
+  }, [])
+
+  const handleCancel = useCallback(() => {
+    cancelledRef.current = true
+    window.electronAPI.cancel()
+    setFile(null)
+    setDecryptError(null)
+    setEncryptError(null)
+    setProgress(0)
+    setPhase('')
     setScreen('drop')
   }, [])
 
   const handleEncryptSubmit = useCallback(async password => {
+    cancelledRef.current = false
+    setEncryptError(null)
     setProgress(0)
     setPhase('')
     setMode('encrypt')
@@ -107,18 +124,24 @@ export default function App() {
 
     try {
       const result = await window.electronAPI.encrypt(file.path, password)
+      if (cancelledRef.current) return
       if (result.success) {
         setOutputPath(result.outputPath)
         setScreen('success')
-      } else {
+      } else if (!result.cancelled) {
+        setEncryptError(result.error || 'Encryption failed — please try again')
         setScreen('encrypt')
       }
     } catch {
+      if (cancelledRef.current) return
+      setEncryptError('Encryption failed — please try again')
       setScreen('encrypt')
     }
   }, [file])
 
   const handleDecryptSubmit = useCallback(async password => {
+    cancelledRef.current = false
+    setDecryptError(null)
     setProgress(0)
     setPhase('')
     setMode('decrypt')
@@ -126,16 +149,17 @@ export default function App() {
 
     try {
       const result = await window.electronAPI.decrypt(file.path, password)
-
+      if (cancelledRef.current) return
       if (result.success) {
         setOutputPath(result.outputPath)
         setScreen('success')
-      } else {
-        setDecryptErr(true)
+      } else if (!result.cancelled) {
+        setDecryptError(result.error || 'Decryption failed — please try again')
         setScreen('decrypt')
       }
     } catch {
-      setDecryptErr(true)
+      if (cancelledRef.current) return
+      setDecryptError('Decryption failed — please try again')
       setScreen('decrypt')
     }
   }, [file])
@@ -144,7 +168,8 @@ export default function App() {
     setFile(null)
     setOutputPath(null)
     setMode(null)
-    setDecryptErr(false)
+    setDecryptError(null)
+    setEncryptError(null)
     setProgress(0)
     setPhase('')
     setScreen('drop')
@@ -160,11 +185,11 @@ export default function App() {
       case 'drop':
         return <DropScreen onFileSelected={handleFileSelected} />
       case 'encrypt':
-        return <EncryptScreen file={file} onClose={handleClear} onSubmit={handleEncryptSubmit} />
+        return <EncryptScreen file={file} onClose={handleClear} onSubmit={handleEncryptSubmit} errorMsg={encryptError} />
       case 'decrypt':
-        return <DecryptScreen file={file} onClose={handleClear} onSubmit={handleDecryptSubmit} hasError={decryptErr} />
+        return <DecryptScreen file={file} onClose={handleClear} onSubmit={handleDecryptSubmit} errorMsg={decryptError} />
       case 'loading':
-        return <LoadingScreen mode={mode} file={file} progress={progress} phase={phase} onClose={handleDone} />
+        return <LoadingScreen mode={mode} file={file} progress={progress} phase={phase} onClose={handleDone} onCancel={handleCancel} />
       case 'success':
         return <SuccessScreen mode={mode} outputPath={outputPath} onDone={handleDone} />
       default:

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   encrypt: (filePath, password) => ipcRenderer.invoke('crypto:encrypt', filePath, password),
   decrypt: (filePath, password) => ipcRenderer.invoke('crypto:decrypt', filePath, password),
+  cancel: () => ipcRenderer.send('crypto:cancel'),
 
   onProgress: (cb) => {
     ipcRenderer.removeAllListeners('crypto:progress')

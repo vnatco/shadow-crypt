@@ -1,7 +1,7 @@
 import SuccessBanner from './SuccessBanner'
 import { IconFolder } from './Icons'
 
-export default function SuccessScreen({ mode, outputPath, onDone }) {
+export default function SuccessScreen({ mode, outputPath }) {
   const isEnc  = mode === 'encrypt'
   const accent = isEnc ? 'var(--cyan)' : 'var(--purple)'
   const label  = isEnc ? 'File encrypted successfully' : 'File decrypted successfully'

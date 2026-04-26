@@ -3,7 +3,7 @@ import FileOpHeader from './FileOpHeader'
 const ENCRYPT_PHASES = ['Deriving key…', 'Generating IV…', 'Encrypting blocks…', 'Writing output…', 'Verifying integrity…']
 const DECRYPT_PHASES = ['Reading file…', 'Deriving key…', 'Decrypting blocks…', 'Verifying tag…', 'Writing output…']
 
-export default function LoadingScreen({ mode, file, progress, phase, onClose }) {
+export default function LoadingScreen({ mode, file, progress, phase, onClose, onCancel }) {
   const isEnc    = mode === 'encrypt'
   const accent   = isEnc ? 'var(--cyan)'   : 'var(--purple)'
   const accentGlow = isEnc ? 'var(--cyan-glow)' : 'oklch(68% 0.2 290 / 0.25)'
@@ -109,7 +109,7 @@ export default function LoadingScreen({ mode, file, progress, phase, onClose }) 
 
       {/* Cancel / Done button */}
       <button
-        onClick={onClose}
+        onClick={done ? onClose : onCancel}
         style={{
           padding: '9px 0',
           borderRadius: 7,

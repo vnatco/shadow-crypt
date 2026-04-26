@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { IconEye, IconCheck, IconX } from './Icons'
 
 export default function PasswordField({
@@ -8,9 +8,17 @@ export default function PasswordField({
   placeholder = 'Enter password…',
   match,
   showMatch = false,
+  autoFocus = false,
 }) {
   const [show, setShow] = useState(false)
   const [focused, setFocused] = useState(false)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [autoFocus])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -34,6 +42,7 @@ export default function PasswordField({
         boxShadow: focused ? '0 0 0 3px var(--cyan-glow)' : 'none',
       }}>
         <input
+          ref={inputRef}
           type={show ? 'text' : 'password'}
           value={value}
           onChange={e => onChange(e.target.value)}
@@ -67,11 +76,9 @@ export default function PasswordField({
           </div>
         )}
 
-        <button
+        <div
           onClick={() => setShow(s => !s)}
           style={{
-            background: 'none',
-            border: 'none',
             cursor: 'pointer',
             padding: '0 10px',
             color: 'var(--muted)',
@@ -80,7 +87,7 @@ export default function PasswordField({
           }}
         >
           <IconEye size={14} color="var(--muted)" closed={show} />
-        </button>
+        </div>
       </div>
     </div>
   )

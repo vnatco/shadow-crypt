@@ -24,6 +24,7 @@ function createWindow() {
     maxWidth: 400,
     frame: false,
     resizable: false,
+    fullscreenable: false,
     show: false,
     backgroundColor: '#0d0f14',
     webPreferences: {
@@ -38,6 +39,20 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
+
+  // Block file navigation triggered by drag-drop onto the window
+  win.webContents.on('will-navigate', event => event.preventDefault())
+
+  // Disable F5/F11/F12/Ctrl+R/Ctrl+Shift+I and other dev/system shortcuts
+  win.webContents.on('before-input-event', (event, input) => {
+    const k = input.key
+    if (
+      k === 'F5' || k === 'F11' || k === 'F12' ||
+      (input.control && k.toLowerCase() === 'r') ||
+      (input.control && input.shift && k.toLowerCase() === 'i') ||
+      (input.control && input.shift && k.toLowerCase() === 'j')
+    ) event.preventDefault()
+  })
 
   win.once('ready-to-show', () => win.show())
 }
@@ -74,25 +89,73 @@ ipcMain.handle('file:getArg', () => {
   } catch { return null }
 })
 
-/* ── Crypto handlers ── */
-ipcMain.handle('crypto:encrypt', async (event, filePath, password) => {
+/* ── Crypto helpers ── */
+function formatBytes(bytes) {
+  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`
+  if (bytes >= 1e6) return `${(bytes / 1e6).toFixed(1)} MB`
+  if (bytes >= 1e3) return `${(bytes / 1e3).toFixed(1)} KB`
+  return `${bytes} B`
+}
+
+function checkFileReadable(filePath) {
+  try { fs.accessSync(filePath, fs.constants.R_OK); return null }
+  catch { return 'Cannot access file — check permissions' }
+}
+
+function checkDiskSpace(dirPath, neededBytes) {
   try {
-    const result = await encryptFile(event, filePath, password)
+    const s = fs.statfsSync(dirPath)
+    const available = s.bavail * s.bsize
+    if (available < neededBytes)
+      return `Not enough disk space — need ${formatBytes(neededBytes)}, only ${formatBytes(available)} free`
+    return null
+  } catch { return null }
+}
+
+/* ── Crypto handlers ── */
+let currentAbort = null
+
+ipcMain.handle('crypto:encrypt', async (event, filePath, password) => {
+  const accessErr = checkFileReadable(filePath)
+  if (accessErr) return { success: false, error: accessErr }
+
+  const fileSize = fs.statSync(filePath).size
+  const spaceErr = checkDiskSpace(path.dirname(filePath), fileSize + 49)
+  if (spaceErr) return { success: false, error: spaceErr }
+
+  currentAbort = new AbortController()
+  try {
+    const result = await encryptFile(event, filePath, password, currentAbort.signal)
     return { success: true, ...result }
   } catch (err) {
+    if (err.name === 'AbortError') return { success: false, cancelled: true }
     return { success: false, error: err.message }
+  } finally {
+    currentAbort = null
   }
 })
 
 ipcMain.handle('crypto:decrypt', async (event, filePath, password) => {
+  const accessErr = checkFileReadable(filePath)
+  if (accessErr) return { success: false, error: accessErr }
+
+  const fileSize = fs.statSync(filePath).size
+  const spaceErr = checkDiskSpace(path.dirname(filePath), fileSize)
+  if (spaceErr) return { success: false, error: spaceErr }
+
+  currentAbort = new AbortController()
   try {
-    const result = await decryptFile(event, filePath, password)
+    const result = await decryptFile(event, filePath, password, currentAbort.signal)
     return { success: true, ...result }
   } catch (err) {
-    console.error('[decrypt error]', err.message)
+    if (err.name === 'AbortError') return { success: false, cancelled: true }
     return { success: false, error: err.message }
+  } finally {
+    currentAbort = null
   }
 })
+
+ipcMain.on('crypto:cancel', () => currentAbort?.abort())
 
 /* ── Window handlers ── */
 ipcMain.handle('window:resize', (_, height) => {

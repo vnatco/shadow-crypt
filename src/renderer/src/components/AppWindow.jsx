@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { IconShield } from './Icons'
 
 function TitleBtn({ onClick, children, redClose = false }) {
   const [hover, setHover] = useState(false)
@@ -60,7 +59,6 @@ export default function AppWindow({ title, children }) {
           flex: 1,
           minWidth: 0,
         }}>
-          <IconShield size={14} color="var(--cyan)" />
           <span style={{
             fontSize: 11,
             color: 'var(--muted)',

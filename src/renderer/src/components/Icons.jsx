@@ -40,7 +40,8 @@ export function IconUpload({ size = 28, color = 'currentColor' }) {
 export function IconEye({ size = 15, color = 'currentColor', closed = false }) {
   return closed ? (
     <svg width={size} height={size} viewBox="0 0 15 15" fill="none">
-      <path d="M2 2l11 11M6.5 5.5A3 3 0 0112 9M3 9c1-2 2.5-3.5 4.5-4" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M1 7.5C2.5 4 5 2 7.5 2S12.5 4 14 7.5C12.5 11 10 13 7.5 13S2.5 11 1 7.5z" stroke={color} strokeWidth="1.3"/>
+      <path d="M3 3L12 12" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
   ) : (
     <svg width={size} height={size} viewBox="0 0 15 15" fill="none">

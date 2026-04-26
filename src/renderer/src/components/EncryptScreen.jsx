@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconLock, IconCheck } from './Icons'
+import { IconLock, IconX } from './Icons'
 import PasswordField from './PasswordField'
 import FileOpHeader from './FileOpHeader'
 import Spinner from './Spinner'
@@ -17,12 +17,12 @@ function getStrength(pw) {
 const strengthLabel = ['', 'Weak', 'Weak', 'Fair', 'Strong', 'Very strong']
 const strengthColor = ['', 'var(--red)', 'var(--red)', 'var(--amber)', 'var(--green)', 'var(--cyan)']
 
-export default function EncryptScreen({ file, onClose, onSubmit, submitting }) {
+export default function EncryptScreen({ file, onClose, onSubmit, submitting, errorMsg }) {
   const [pw, setPw]   = useState('')
   const [pw2, setPw2] = useState('')
   const strength  = getStrength(pw)
   const match     = pw.length > 0 && pw2.length > 0 && pw === pw2
-  const canSubmit = pw.length >= 4 && match && !submitting
+  const canSubmit = pw.length >= 1 && match && !submitting
 
   const handleSubmit = () => { if (canSubmit) onSubmit(pw) }
   const handleKeyDown = e => { if (e.key === 'Enter' && canSubmit) handleSubmit() }
@@ -42,6 +42,7 @@ export default function EncryptScreen({ file, onClose, onSubmit, submitting }) {
           value={pw}
           onChange={setPw}
           placeholder="Choose a strong password…"
+          autoFocus
         />
 
         {/* Strength bar */}
@@ -77,32 +78,23 @@ export default function EncryptScreen({ file, onClose, onSubmit, submitting }) {
         />
       </div>
 
-      {/* Requirements checklist */}
-      <div style={{
-        background: 'var(--bg2)',
-        border: '1px solid var(--border)',
-        borderRadius: 7,
-        padding: '8px 12px',
-        display: 'flex', flexDirection: 'column', gap: 4,
-      }}>
-        {[
-          { ok: pw.length >= 8,                        label: 'At least 8 characters' },
-          { ok: /[A-Z]/.test(pw) && /[0-9]/.test(pw), label: 'Uppercase + number' },
-          { ok: match,                                  label: 'Passwords match' },
-        ].map(({ ok, label }) => (
-          <div key={label} style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            fontSize: 11,
-            color: ok ? 'var(--green)' : 'var(--muted)',
-          }}>
-            {ok
-              ? <IconCheck size={11} color="var(--green)" />
-              : <div style={{ width: 11, height: 11, borderRadius: '50%', border: '1.3px solid var(--border)', flexShrink: 0 }} />
-            }
-            {label}
-          </div>
-        ))}
-      </div>
+{/* Error banner */}
+      {errorMsg && (
+        <div style={{
+          background: 'oklch(65% 0.22 25 / 0.1)',
+          border: '1px solid oklch(65% 0.22 25 / 0.4)',
+          borderRadius: 7,
+          padding: '8px 12px',
+          fontSize: 11,
+          color: 'var(--red)',
+          fontFamily: 'Space Mono',
+          display: 'flex', alignItems: 'center', gap: 7,
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          <IconX size={11} color="var(--red)" />
+          {errorMsg}
+        </div>
+      )}
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 8 }}>

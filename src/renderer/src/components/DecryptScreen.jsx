@@ -4,7 +4,7 @@ import PasswordField from './PasswordField'
 import FileOpHeader from './FileOpHeader'
 import Spinner from './Spinner'
 
-export default function DecryptScreen({ file, onClose, onSubmit, hasError, submitting }) {
+export default function DecryptScreen({ file, onClose, onSubmit, errorMsg, submitting }) {
   const [pw, setPw] = useState('')
   const canSubmit = pw.length >= 1 && !submitting
 
@@ -24,10 +24,11 @@ export default function DecryptScreen({ file, onClose, onSubmit, hasError, submi
         value={pw}
         onChange={v => { setPw(v) }}
         placeholder="Enter password to decrypt…"
+        autoFocus
       />
 
-      {/* Wrong password error */}
-      {hasError && (
+      {/* Error banner */}
+      {errorMsg && (
         <div style={{
           background: 'oklch(65% 0.22 25 / 0.1)',
           border: '1px solid oklch(65% 0.22 25 / 0.4)',
@@ -40,7 +41,7 @@ export default function DecryptScreen({ file, onClose, onSubmit, hasError, submi
           animation: 'fadeIn 0.2s ease',
         }}>
           <IconX size={11} color="var(--red)" />
-          Incorrect password - decryption failed
+          {errorMsg === 'WRONG_PASSWORD' ? 'Incorrect password — decryption failed' : errorMsg}
         </div>
       )}
 
