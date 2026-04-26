@@ -36,7 +36,7 @@ async function encryptFile(event, inputPath, password) {
 
   sendProgress(event, 10, 'Deriving key…')
   const salt = randomBytes(16)
-  const key = await scryptAsync(password, salt, 32, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P })
+  const key = await scryptAsync(password, salt, 32, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P, maxmem: 256 * 1024 * 1024 })
 
   sendProgress(event, 60, 'Encrypting…')
   const iv = randomBytes(12)
@@ -94,7 +94,7 @@ async function decryptShadowCryptV2(event, data, inputPath, password) {
   const ciphertext = data.slice(49)
 
   sendProgress(event, 10, 'Deriving key…')
-  const key = await scryptAsync(password, salt, 32, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P })
+  const key = await scryptAsync(password, salt, 32, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P, maxmem: 256 * 1024 * 1024 })
 
   sendProgress(event, 60, 'Decrypting…')
   const decipher = createDecipheriv('aes-256-gcm', key, iv)
