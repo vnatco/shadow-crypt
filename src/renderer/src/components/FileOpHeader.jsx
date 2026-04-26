@@ -48,7 +48,15 @@ export default function FileOpHeader({ file, mode, onClose }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'Space Mono' }}>
-            {file?.size ? (file.size / 1024).toFixed(1) + ' KB' : '-'}
+            {(() => {
+                const b = file?.size
+                if (!b) return '-'
+                if (b < 1024) return b + ' B'
+                if (b < 1024 ** 2) return (b / 1024).toFixed(1) + ' KB'
+                if (b < 1024 ** 3) return (b / 1024 ** 2).toFixed(1) + ' MB'
+                if (b < 1024 ** 4) return (b / 1024 ** 3).toFixed(1) + ' GB'
+                return (b / 1024 ** 4).toFixed(1) + ' TB'
+              })()}
           </span>
           <span style={{ color: 'var(--border)', fontSize: 10 }}>·</span>
           <span style={{ fontSize: 10, color: accent, fontFamily: 'Space Mono', opacity: 0.8 }}>

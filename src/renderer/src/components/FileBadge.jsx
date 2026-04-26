@@ -5,7 +5,15 @@ export default function FileBadge({ file, onClear }) {
   const isEnc = name.endsWith('.enc') || name.endsWith('.aes')
   const ext = name.split('.').pop().toUpperCase()
   const short = name.length > 26 ? name.slice(0, 12) + '…' + name.slice(-10) : name
-  const sizeLabel = file?.size ? (file.size / 1024).toFixed(1) + ' KB' : '-'
+  const sizeLabel = (() => {
+    const b = file?.size
+    if (!b) return '-'
+    if (b < 1024) return b + ' B'
+    if (b < 1024 ** 2) return (b / 1024).toFixed(1) + ' KB'
+    if (b < 1024 ** 3) return (b / 1024 ** 2).toFixed(1) + ' MB'
+    if (b < 1024 ** 4) return (b / 1024 ** 3).toFixed(1) + ' GB'
+    return (b / 1024 ** 4).toFixed(1) + ' TB'
+  })()
 
   return (
     <div style={{
