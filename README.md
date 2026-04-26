@@ -2,6 +2,9 @@
 
 A free, open-source desktop app for AES-256 file encryption and decryption. Currently optimized for Windows - the core crypto and UI are built on Electron and React, so porting to macOS and Linux is straightforward.
 
+![Drop screen](screenshots/Screen1.png)
+![Encrypt screen](screenshots/Screen2.png)
+
 ## Why it exists
 
 [AES Crypt](https://www.aescrypt.com) became paywalled, leaving users unable to access their own encrypted `.aes` files without paying. Shadow Crypt was built as a free replacement - it decrypts any `.aes` file created by the original AES Crypt app, and encrypts new files using a significantly stronger format.
