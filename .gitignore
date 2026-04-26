@@ -1,0 +1,6 @@
+node_modules/
+out/
+release/
+.claude/
+CLAUDE.md
+*.blockmap
